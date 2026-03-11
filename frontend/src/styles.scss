@@ -1,0 +1,73 @@
+:root {
+  /* Light Theme Variables */
+
+  /* Sidebar: Light/White (or match page bg?) */
+  /* User said "background of the page should be rgb(251, 249, 244)" */
+  --sidebar-bg-from: #fbf9f4;
+  --sidebar-bg-to: #fbf9f4;
+
+  /* Brand Colors */
+  --primary-color: #ff7540;
+  /* rgb(255, 117, 64) */
+  --accent-color: #ff7540;
+  /* Icons matches Primary */
+  --title-color: #0e5447;
+  /* rgb(14, 84, 71) */
+
+  /* Backgrounds */
+  --input-bg: #FFFFFF;
+  --bg-color: #fbf9f4;
+  /* rgb(251, 249, 244) */
+
+  /* Text */
+  /* "change all the text to that cgreem color only no black no orange" */
+  --text-color: #0e5447;
+  /* rgb(14, 84, 71) */
+  --sidebar-text: #0e5447;
+
+  /* Semantic Variables (New) */
+  --chat-bg: #fbf9f4;
+  --message-bg-assistant: #FFFFFF;
+  /* White bubbles on off-white bg? or keep grey? */
+  --message-text-assistant: #0e5447;
+  --message-bg-user: #ff7540;
+  /* User Bubble matches Button Color */
+  --message-text-user: #FFFFFF;
+  --border-color: #e0e0e0;
+  --input-area-bg: #fbf9f4;
+  --code-bg: #ebecf0;
+  --icon-color: #ff7540;
+
+  --font-family: 'Inter', system-ui, sans-serif;
+  --font-heading: 'Canela', serif;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #dfe1e6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c1c7d0;
+}

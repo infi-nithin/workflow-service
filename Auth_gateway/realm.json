@@ -1,0 +1,155 @@
+{
+  "realm": "authentication",
+  "enabled": true,
+  "clientScopes": [
+    {
+      "name": "MutualFunds",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true"
+      }
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "public-client",
+      "name": "Angular Public Client",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:8081/api/auth/callback",
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8081/api/auth/post-logout"
+      },
+      "defaultClientScopes": [
+        "profile",
+        "email",
+        "roles",
+        "MutualFunds"
+      ],
+      "protocolMappers": [
+        {
+          "name": "sub",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "id",
+            "claim.name": "sub",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.client.audience": "public-client",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "email",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-property-mapper",
+          "config": {
+            "user.attribute": "email",
+            "claim.name": "email",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-client-role-mapper",
+          "config": {
+            "user-role-mappings.client.id": "public-client",
+            "multivalued": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "resource_access.${client_id}.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "roles": {
+    "client": {
+      "public-client": [
+        { "name": "ROLE_DISTRIBUTOR" },
+        { "name": "ROLE_FUND" },
+        { "name": "ROLE_ADMIN" }
+      ]
+    }
+  },
+  "users": [
+    {
+      "username": "kalyan",
+      "emailVerified": true,
+      "enabled": true,
+      "email": "kalyan@gmail.com",
+      "firstName": "kalyan",
+      "lastName": "kalyan",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "kalyan",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "public-client": [ "ROLE_ADMIN" ]
+      }
+    },
+    {
+      "username": "Fund",
+      "emailVerified": true,
+      "enabled": true,
+      "email": "fund@gmail.com",
+      "firstName": "fund",
+      "lastName": "fund",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Fund@123",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "public-client": [ "ROLE_FUND" ]
+      }
+    },
+    {
+      "username": "A",
+      "emailVerified": true,
+      "enabled": true,
+      "email": "a@gmail.com",
+      "firstName": "a",
+      "lastName": "a",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Admin@123",
+          "temporary": false
+        }
+      ],
+      "clientRoles": {
+        "public-client": [ "ROLE_DISTRIBUTOR" ]
+      }
+    }
+  ]
+}

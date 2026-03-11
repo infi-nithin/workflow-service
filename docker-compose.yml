@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"   
+    volumes:
+      - ./Auth_gateway/realm.json:/opt/keycloak/data/import/realm.json
+    networks:
+      - mcp-net
+
+  auth-service-mcp:
+    build:
+      context: ./Auth_gateway
+      dockerfile: Dockerfile.auth
+    container_name: auth-service-mcp
+    ports:
+      - "8280:8280"
+    environment:
+      KEYCLOAK_INTERNAL_URL: http://keycloak:8080
+      KEYCLOAK_PUBLIC_URL: http://localhost:8180
+      KEYCLOAK_REALM: authentication
+      KEYCLOAK_CLIENT_ID: public-client
+      GATEWAY_CALLBACK: http://localhost:8081/api/auth/callback
+      FRONTEND_CALLBACK: http://localhost:4200/login-callback
+    depends_on:
+      - keycloak
+    networks:
+      - mcp-net
+
+  auth-gateway:
+    build:
+      context: ./Auth_gateway
+      dockerfile: Dockerfile.openresty
+    container_name: auth-gateway
+    ports:
+      - "8081:8081"
+    depends_on:
+      - auth-service-mcp
+    networks:
+      - mcp-net
+
+  frontend-mcp:
+      build:
+        context: ./Frontend
+        dockerfile: Dockerfile
+      container_name: frontend-mcp
+      ports:
+        - "4200:4200"
+      depends_on:
+        - auth-gateway
+      networks:
+        - mcp-net
+      volumes:
+        - ./Frontend:/app
+        - /app/node_modules 
+
+networks:
+  mcp-net:
+    driver: bridge
