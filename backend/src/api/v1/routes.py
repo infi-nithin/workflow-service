@@ -90,48 +90,6 @@ async def execute(request: ChatRequest):
         )
 
 
-@router.post("/execute/{intent}", response_model=ChatResponse)
-async def execute_with_intent(
-    intent: str,
-    request: ChatRequest,
-):
-    """
-    Execute the agent with a specific intent.
-
-    This endpoint allows specifying the intent directly without auto-classification.
-    """
-    try:
-        exec_request = ExecuteRequest(
-            workflow_id=request.workflow_id,
-            input_data=request.input_data,
-            intent=intent,
-            graph_definition=request.graph_definition,
-        )
-
-        result = await agent_service.execute(exec_request)
-
-        return ChatResponse(result=result.result, execution_log=result.execution_log)
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Agent execution failed: {str(e)}",
-        )
-
-
-@router.get("/intents", response_model=IntentListResponse)
-async def list_intents():
-    """List all available intents from the graph registry."""
-    try:
-        intents = await agent_service.get_available_intents()
-        return IntentListResponse(intents=intents, total_count=len(intents))
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list intents: {str(e)}",
-        )
-
-
 @router.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),

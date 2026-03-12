@@ -7,6 +7,7 @@ from langchain_core.messages import BaseMessage
 
 class SupervisorAction(str, Enum):
     """Actions the supervisor can decide to take."""
+
     LLM = "llm"
     TOOL = "tool"
     END = "end"
@@ -15,18 +16,32 @@ class SupervisorAction(str, Enum):
 
 class SupervisorDecision(BaseModel):
     """Structured output for supervisor decision making."""
-    action: SupervisorAction = Field(description="The action to take: 'llm', 'tool', 'end', or 'continue'")
+
+    action: SupervisorAction = Field(
+        description="The action to take: 'llm', 'tool', 'end', or 'continue'"
+    )
     reasoning: str = Field(description="Reasoning for the decision")
-    tool_name: Optional[str] = Field(default=None, description="Name of tool to execute (if action is 'tool')")
-    tool_arguments: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Arguments for tool (if action is 'tool')")
-    next_node: Optional[str] = Field(default=None, description="Next node to execute in the graph (if action is 'continue')")
-    response: Optional[str] = Field(default=None, description="Response to return to user (if action is 'end')")
-    llm_prompt: Optional[str] = Field(default=None, description="Prompt to give to LLM (if action is 'llm')")
+    tool_name: Optional[str] = Field(
+        default=None, description="Name of tool to execute (if action is 'tool')"
+    )
+    tool_arguments: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Arguments for tool (if action is 'tool')"
+    )
+    next_node: Optional[str] = Field(
+        default=None,
+        description="Next node to execute in the graph (if action is 'continue')",
+    )
+    response: Optional[str] = Field(
+        default=None, description="Response to return to user (if action is 'end')"
+    )
+    llm_prompt: Optional[str] = Field(
+        default=None, description="Prompt to give to LLM (if action is 'llm')"
+    )
 
 
 class SupervisorAgentState(TypedDict, total=False):
     """State that flows through the supervisor agent graph.
-    
+
     Attributes:
         messages: List of conversation messages
         graph_definition: The fetched graph definition from registry
@@ -40,6 +55,7 @@ class SupervisorAgentState(TypedDict, total=False):
         node_outputs: Dictionary of outputs from each node execution
         raw_input: The raw input data from the user request
     """
+
     messages: Sequence[BaseMessage]
     graph_definition: Dict[str, Any]
     current_node: Optional[str]
@@ -56,7 +72,7 @@ class SupervisorAgentState(TypedDict, total=False):
 class AgentState(TypedDict, total=False):
     """
     Main agent state that flows through execution.
-    
+
     Attributes:
         workflow_id: Unique identifier for this workflow execution
         raw_input: The raw input data from the user request
@@ -66,6 +82,7 @@ class AgentState(TypedDict, total=False):
         final_output: The final output after graph execution
         execution_log: Dictionary containing execution metadata and logs
     """
+
     workflow_id: str
     raw_input: Dict[str, Any]
     intent: str
@@ -77,20 +94,30 @@ class AgentState(TypedDict, total=False):
 
 class ExecuteRequest(BaseModel):
     """Request model for agent execution endpoint."""
+
     workflow_id: str = Field(..., description="Unique identifier for the workflow")
     input_data: Dict[str, Any] = Field(..., description="Input data for the agent")
-    intent: Optional[str] = Field(default=None, description="Pre-classified intent (optional)")
-    graph_definition: Optional[Dict[str, Any]] = Field(default=None, description="Graph definition (optional, will fetch from registry if not provided)")
+    intent: Optional[str] = Field(
+        default=None, description="Pre-classified intent (optional)"
+    )
+    graph_definition: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Graph definition (optional, will fetch from registry if not provided)",
+    )
 
 
 class ExecuteResponse(BaseModel):
     """Response model for agent execution endpoint."""
+
     result: Dict[str, Any] = Field(..., description="The execution result")
-    execution_log: Dict[str, Any] = Field(..., description="Execution metadata and logs")
+    execution_log: Dict[str, Any] = Field(
+        ..., description="Execution metadata and logs"
+    )
 
 
 class NodeExecutionLog(BaseModel):
     """Log entry for a single node execution."""
+
     node_id: str
     node_type: str
     duration_ms: int
@@ -103,6 +130,7 @@ class NodeExecutionLog(BaseModel):
 
 class ExecutionLog(BaseModel):
     """Main execution log structure."""
+
     trace_id: str
     workflow_id: str
     graph_version: Optional[str] = None
@@ -117,6 +145,7 @@ class ExecutionLog(BaseModel):
 
 class GraphNode(BaseModel):
     """Represents a node in the graph definition."""
+
     id: str
     type: str  # mcp_tool, llm, sub_agent
     tool_name: Optional[str] = None
@@ -126,6 +155,7 @@ class GraphNode(BaseModel):
 
 class GraphEdge(BaseModel):
     """Edge definition connecting two nodes."""
+
     from_: str = Field(..., alias="from")
     to: str
 
@@ -135,6 +165,7 @@ class GraphEdge(BaseModel):
 
 class GraphDefinition(BaseModel):
     """Graph definition from the registry."""
+
     version: str
     nodes: List[GraphNode]
     edges: List[GraphEdge]
@@ -142,11 +173,28 @@ class GraphDefinition(BaseModel):
 
 class GraphSubmission(BaseModel):
     """Graph submission from registry."""
+
     intent: str
     graph: GraphDefinition
 
 
 class IntentListResponse(BaseModel):
     """Response for listing intents."""
+
     intents: List[str]
     total_count: int
+
+
+class ToolExecutionRequest(BaseModel):
+    """Request model for tool execution."""
+
+    tool_name: str
+    arguments: Dict[str, Any] = Field(default_factory=dict)
+
+
+class ToolExecutionResponse(BaseModel):
+    """Response model for tool execution."""
+
+    success: bool
+    result: Optional[Any] = None
+    error: Optional[str] = None

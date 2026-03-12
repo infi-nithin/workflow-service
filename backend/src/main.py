@@ -30,16 +30,17 @@ class Context(TypedDict):
     thread_id: str
     user: UserContext
 
+
 def extract_user_context(req: Request) -> Optional[Dict[str, Any]]:
     """Extract user context from request headers.
-    
+
     Extracts the following headers:
     - X-User-Id (required for authentication)
     - X-Username
     - X-User-Roles (comma-separated)
     - X-User-Scope (space-separated)
     - Authorization token (Bearer token)
-    
+
     Returns:
         Optional[Dict[str, Any]]: User context dict or None if no X-User-Id
     """
@@ -56,6 +57,7 @@ def extract_user_context(req: Request) -> Optional[Dict[str, Any]]:
             "token": token,
         }
     return None
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -97,7 +99,7 @@ app = create_app()
 @app.get("/api/auth/me")
 async def get_current_user(req: Request):
     """Get current authenticated user.
-    
+
     Returns user context if authenticated, otherwise returns
     {"authenticated": False}.
     """
@@ -106,11 +108,12 @@ async def get_current_user(req: Request):
         return {"authenticated": False}
     return {"authenticated": True, **user}
 
+
 if __name__ == "__main__":
     import uvicorn
 
-    host = os.getenv("HOST", "0.0.0.0")
-    port = int(os.getenv("PORT", "8003"))
+    host = os.getenv("HOST")
+    port = int(os.getenv("PORT"))
 
     uvicorn.run(
         "main:app",
