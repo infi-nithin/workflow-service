@@ -4,26 +4,7 @@ from typing import Dict, Any, Optional, List
 from langchain_core.messages import HumanMessage, SystemMessage
 from agent.llm_utils import get_llm_client
 
-DEFAULT_CLASSIFICATION_PROMPT = """You are an intent classifier. Your task is to classify user input into one of the available intents.
-Available intents:
-{available_intents}
-Instructions:
-1. Analyze the user's input
-2. Select the most appropriate intent from the available intents
-3. Return a JSON object with your classification
-Return format:
-{{
-    "intent": "intent_name",
-    "confidence": 0.0-1.0,
-    "reasoning": "brief explanation"
-}}
-If none of the available intents match, return:
-{{
-    "intent": "unknown",
-    "confidence": 0.0,
-    "reasoning": "explanation"
-}}
-"""
+from agent.prompts import DEFAULT_CLASSIFICATION_PROMPT
 
 
 class IntentClassifier:
