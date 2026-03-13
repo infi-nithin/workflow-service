@@ -28,6 +28,8 @@ from agent.prompts import (
     CLASSIFY_INTENT_SYSTEM_PROMPT,
     CLASSIFY_INTENT_USER_PROMPT,
 )
+from db.database import get_session, init_db
+from db.models import WorkflowExecution
 
 load_dotenv()
 
@@ -522,6 +524,69 @@ class AgentService:
             },
         )
 
+    async def _save_execution_to_db(
+        self,
+        trace_id: str,
+        workflow_id: str,
+        graph_version: str,
+        intent: str,
+        status: str,
+        started_at: datetime,
+        completed_at: datetime,
+        duration_ms: int,
+        nodes: List[Dict[str, Any]],
+        error: Optional[str] = None,
+    ) -> bool:
+        """Save workflow execution to database.
+        
+        Args:
+            trace_id: Unique trace identifier
+            workflow_id: Workflow identifier
+            graph_version: Version of the graph used
+            intent: Intent/classification of the execution
+            status: Execution status (running, completed, failed, partial)
+            started_at: Start timestamp
+            completed_at: Completion timestamp
+            duration_ms: Duration in milliseconds
+            nodes: List of execution nodes/history
+            error: Error message if any
+            
+        Returns:
+            True if saved successfully, False otherwise
+        """
+        try:
+            # Initialize database if not already done
+            await init_db(run_migrations=False)
+            
+            # Get database session using context manager approach
+            async for session in get_session():
+                # Create new workflow execution record
+                execution = WorkflowExecution(
+                    trace_id=trace_id,
+                    workflow_id=workflow_id,
+                    graph_version=graph_version,
+                    intent=intent,
+                    model_versions_used=[{"bedrock_model_id": self.bedrock_model_id}],
+                    total_tokens=0,
+                    started_at=started_at,
+                    completed_at=completed_at,
+                    status=status,
+                    duration_ms=duration_ms,
+                    nodes=nodes,
+                    error=error,
+                )
+                
+                session.add(execution)
+                await session.commit()
+                break
+            
+            return True
+            
+        except Exception as e:
+            # Log error but don't fail the execution
+            print(f"Failed to save execution to database: {str(e)}")
+            return False
+
     async def get_available_intents(self) -> List[str]:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(f"{self.graph_registry_url}/api/v1/intents")
@@ -656,6 +721,22 @@ class AgentService:
                 "status": result_status,
                 "duration_ms": duration_ms,
             }
+            
+            # Save execution to database
+            started_at_dt = datetime.utcfromtimestamp(start_time)
+            completed_at_dt = datetime.utcnow()
+            await self._save_execution_to_db(
+                trace_id=trace_id,
+                workflow_id=request.workflow_id,
+                graph_version=graph_version,
+                intent=intent,
+                status=result_status,
+                started_at=started_at_dt,
+                completed_at=completed_at_dt,
+                duration_ms=duration_ms,
+                nodes=result.get("execution_history", []),
+            )
+            
             return ExecuteResponse(
                 result={
                     "intent": intent,
@@ -676,6 +757,23 @@ class AgentService:
                 "started_at": datetime.utcnow().isoformat(),
                 "completed_at": datetime.utcnow().isoformat(),
             }
+            
+            # Save failed execution to database
+            started_at_dt = datetime.utcfromtimestamp(start_time)
+            completed_at_dt = datetime.utcnow()
+            await self._save_execution_to_db(
+                trace_id=trace_id,
+                workflow_id=request.workflow_id,
+                graph_version="unknown",
+                intent=request.intent or "unknown",
+                status="failed",
+                started_at=started_at_dt,
+                completed_at=completed_at_dt,
+                duration_ms=duration_ms,
+                nodes=[],
+                error=str(e),
+            )
+            
             return ExecuteResponse(
                 result={"error": str(e)},
                 execution_log=execution_log,
