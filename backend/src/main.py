@@ -5,19 +5,15 @@ from contextlib import asynccontextmanager
 from typing import Any, Dict, Optional, TypedDict
 from dotenv import load_dotenv
 
+load_dotenv()
+sys.path.append(str(Path(__file__).parent.parent))
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.routes import router as api_router
-
-# Load environment variables
-load_dotenv()
-
-sys.path.append(str(Path(__file__).parent.parent))
+from db.database import init_db, close_db
 
 
 class UserContext(TypedDict, total=False):
-    """User context propagated from auth layer (Keycloak/JWT)."""
-
     user_id: str
     roles: list[str]
     scope: list[str]
@@ -25,25 +21,11 @@ class UserContext(TypedDict, total=False):
 
 
 class Context(TypedDict):
-    """LangGraph runtime context."""
-
     thread_id: str
     user: UserContext
 
 
 def extract_user_context(req: Request) -> Optional[Dict[str, Any]]:
-    """Extract user context from request headers.
-
-    Extracts the following headers:
-    - X-User-Id (required for authentication)
-    - X-Username
-    - X-User-Roles (comma-separated)
-    - X-User-Scope (space-separated)
-    - Authorization token (Bearer token)
-
-    Returns:
-        Optional[Dict[str, Any]]: User context dict or None if no X-User-Id
-    """
     user_id = req.headers.get("X-User-Id")
     if user_id:
         roles_raw = req.headers.get("X-User-Roles", "")
@@ -61,24 +43,20 @@ def extract_user_context(req: Request) -> Optional[Dict[str, Any]]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan handler for startup/shutdown tasks."""
-    # Startup
     print("Starting Agent Backend Service...")
+    await init_db(run_migrations=True)
     yield
-    # Shutdown
     print("Shutting down Agent Backend Service...")
+    await close_db()
 
 
 def create_app() -> FastAPI:
-    """Create and configure the FastAPI application."""
     app = FastAPI(
         title="Agent Framework Service",
         description="Generalized LangGraph Agent with Graph Registry Integration",
         version="1.0.0",
         lifespan=lifespan,
     )
-
-    # Configure CORS
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -86,10 +64,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Include API routes
     app.include_router(api_router, prefix="/api/v1/agent")
-
     return app
 
 
@@ -98,11 +73,6 @@ app = create_app()
 
 @app.get("/api/auth/me")
 async def get_current_user(req: Request):
-    """Get current authenticated user.
-
-    Returns user context if authenticated, otherwise returns
-    {"authenticated": False}.
-    """
     user = extract_user_context(req)
     if not user:
         return {"authenticated": False}
@@ -114,7 +84,6 @@ if __name__ == "__main__":
 
     host = os.getenv("HOST")
     port = int(os.getenv("PORT"))
-
     uvicorn.run(
         "main:app",
         host=host,
