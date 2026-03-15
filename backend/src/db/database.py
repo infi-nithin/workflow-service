@@ -8,20 +8,14 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.pool import AsyncAdaptedQueuePool
-from dotenv import load_dotenv
+from src.config.config import config
 
-load_dotenv()
 engine: Optional[AsyncEngine] = None
 async_session_factory: Optional[async_sessionmaker[AsyncSession]] = None
 
 
 def get_database_url() -> str:
-    host = os.getenv("DB_HOST")
-    port = os.getenv("DB_PORT")
-    name = os.getenv("DB_NAME")
-    user = os.getenv("DB_USER")
-    password = os.getenv("DB_PASSWORD")
-    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{name}"
+    return config.database.url
 
 
 async def run_alembic_migrations() -> None:

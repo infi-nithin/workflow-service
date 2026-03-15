@@ -4,34 +4,17 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from agent.service import AgentService
 from agent.models import ExecuteRequest
+from api.v1.api_models import ChatRequest, ChatMessage, ChatResponse
+
 router = APIRouter()
-# Initialize agent service
 agent_service = AgentService()
-class ChatMessage(BaseModel):
-    role: str = Field(default="user")
-    content: str
-class ChatRequest(BaseModel):
-    workflow_id: str = Field(
-        ..., description="Unique identifier for the workflow/thread"
-    )
-    input_data: Dict[str, Any] = Field(..., description="Input data for the agent")
-    intent: Optional[str] = Field(
-        default=None,
-        description="Pre-classified intent (optional, will be auto-classified if not provided)",
-    )
-    graph_definition: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Graph definition (optional, will be fetched from registry if not provided)",
-    )
-class ChatResponse(BaseModel):
-    result: Dict[str, Any]
-    execution_log: Dict[str, Any]
-class IntentListResponse(BaseModel):
-    intents: List[str]
-    total_count: int
+
+
 @router.get("/ping")
 async def ping():
     return {"ping": "pong", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
 @router.post("/execute", response_model=ChatResponse)
 async def execute(request: ChatRequest):
     try:
@@ -50,11 +33,13 @@ async def execute(request: ChatRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Agent execution failed: {str(e)}",
         )
+
+
 @router.post("/upload")
 async def upload_file(
-    file: UploadFile = File(...),
-    thread_id: str = Form(...),
-    description: str = Form(""),
+        file: UploadFile = File(...),
+        thread_id: str = Form(...),
+        description: str = Form(""),
 ):
     try:
         content = await file.read()

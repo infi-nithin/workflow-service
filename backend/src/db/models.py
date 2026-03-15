@@ -8,8 +8,12 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
 class Base(DeclarativeBase):
     pass
+
+
 class WorkflowExecution(Base):
     __tablename__ = "workflow_executions"
     id: Mapped[UUID] = mapped_column(
@@ -47,5 +51,6 @@ class WorkflowExecution(Base):
         Index("idx_workflow_executions_started_at", "started_at"),
         Index("idx_workflow_executions_status", "status"),
     )
+
     def __repr__(self) -> str:
         return f"<WorkflowExecution(trace_id={self.trace_id}, workflow_id={self.workflow_id}, status={self.status})>"

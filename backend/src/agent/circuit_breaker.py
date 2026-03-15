@@ -3,19 +3,7 @@ import threading
 from enum import Enum
 from typing import Dict
 from dataclasses import dataclass, field
-
-
-class CircuitState(Enum):
-    CLOSED = "closed"
-    OPEN = "open"
-    HALF_OPEN = "half_open"
-
-
-@dataclass
-class CircuitBreakerConfig:
-    threshold: int = 3
-    cooldown: int = 30
-
+from agent.models import CircuitState
 
 @dataclass
 class CircuitBreaker:

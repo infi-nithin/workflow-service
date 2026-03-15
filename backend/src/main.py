@@ -3,9 +3,8 @@ from pathlib import Path
 import sys
 from contextlib import asynccontextmanager
 from typing import Any, Dict, Optional, TypedDict
-from dotenv import load_dotenv
+from config.config import config
 
-load_dotenv()
 sys.path.append(str(Path(__file__).parent.parent))
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -82,11 +81,11 @@ async def get_current_user(req: Request):
 if __name__ == "__main__":
     import uvicorn
 
-    host = os.getenv("HOST")
-    port = int(os.getenv("PORT"))
+    host = config.server.host
+    port = config.server.port
     uvicorn.run(
         "main:app",
         host=host,
         port=port,
-        reload=os.getenv("APP_ENV") == "development",
+        reload=config.server.app_env == "development",
     )

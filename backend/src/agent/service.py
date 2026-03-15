@@ -5,12 +5,12 @@ import uuid
 import asyncio
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from dotenv import load_dotenv
 import httpx
 from langchain_aws import ChatBedrock
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from langgraph.graph import StateGraph, END
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from src.config.config import config
 from agent.models import (
     ExecuteRequest,
     ExecuteResponse,
@@ -30,8 +30,6 @@ from agent.prompts import (
 )
 from db.database import get_session, init_db
 from db.models import WorkflowExecution
-
-load_dotenv()
 
 
 def _create_supervisor_prompt(graph_definition: Dict[str, Any]) -> str:
@@ -502,16 +500,14 @@ Task: {llm_prompt}"""
 
 class AgentService:
     def __init__(self):
-        self.graph_registry_url = os.getenv(
-            "GRAPH_REGISTRY_URL", "http://localhost:8002"
-        )
-        self.tool_registry_url = os.getenv("TOOL_REGISTRY_URL", "http://localhost:8001")
-        self.mcp_server_url = os.getenv("MCP_SERVER_URL", "http://localhost:8001/mcp")
-        self.aws_region = os.getenv("AWS_REGION")
-        self.bedrock_model_id = os.getenv("BEDROCK_MODEL_ID")
-        self.aws_secret_access_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-        self.aws_access_key_id = os.getenv("AWS_ACCESS_KEY_ID")
-        self.aws_session_token = os.getenv("AWS_SESSION_TOKEN")
+        self.graph_registry_url = config.registry.graph_registry_url
+        self.tool_registry_url = config.registry.tool_registry_url
+        self.mcp_server_url = config.registry.mcp_server_url
+        self.aws_region = config.aws.region
+        self.bedrock_model_id = config.aws.bedrock_model_id
+        self.aws_secret_access_key = config.aws.secret_access_key
+        self.aws_access_key_id = config.aws.access_key_id
+        self.aws_session_token = config.aws.session_token
         self.llm = ChatBedrock(
             model_id=self.bedrock_model_id,
             aws_secret_access_key=self.aws_secret_access_key,
