@@ -1,13 +1,11 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
-from pydantic import BaseModel, Field
-from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
-from agent.service import AgentService
+from agent.workflow_service import WorkflowService
 from agent.models import ExecuteRequest
-from api.v1.api_models import ChatRequest, ChatMessage, ChatResponse
+from api.v1.api_models import ChatRequest, ChatResponse
 
 router = APIRouter()
-agent_service = AgentService()
+workflow_service = WorkflowService()
 
 
 @router.get("/ping")
@@ -26,7 +24,7 @@ async def execute(request: ChatRequest):
             graph_definition=request.graph_definition,
         )
         # Execute agent
-        result = await agent_service.execute(exec_request)
+        result = await workflow_service.execute(exec_request)
         return ChatResponse(result=result.result, execution_log=result.execution_log)
     except Exception as e:
         raise HTTPException(
