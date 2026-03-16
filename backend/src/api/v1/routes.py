@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 from datetime import datetime, timezone
 from agent.workflow_service import WorkflowService
-from agent.models import ExecuteRequest
+from agent.models import API
 from api.v1.api_models import ChatRequest, ChatResponse
 
 router = APIRouter()
@@ -17,11 +17,9 @@ async def ping():
 async def execute(request: ChatRequest):
     try:
         # Create execute request with optional intent and graph_definition
-        exec_request = ExecuteRequest(
+        exec_request = API.Request(
             workflow_id=request.workflow_id,
             input_data=request.input_data,
-            intent=request.intent,
-            graph_definition=request.graph_definition,
         )
         # Execute agent
         result = await workflow_service.execute(exec_request)

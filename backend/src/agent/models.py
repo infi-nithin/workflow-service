@@ -1,5 +1,4 @@
 from typing import TypedDict, Any, Dict, List, Optional, Sequence
-from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
 from langchain_core.messages import BaseMessage
@@ -62,28 +61,21 @@ class AgentState(TypedDict, total=False):
     execution_log: Dict[str, Any]
 
 
-class ExecuteRequest(BaseModel):
-    workflow_id: str = Field(..., description="Unique identifier for the workflow")
-    input_data: Dict[str, Any] = Field(..., description="Input data for the agent")
-    intent: Optional[str] = Field(
-        default=None, description="Pre-classified intent (optional)"
-    )
-    graph_definition: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Graph definition (optional, will fetch from registry if not provided)",
-    )
+class API:
+    class Request(BaseModel):
+        workflow_id: str = Field(..., description="Unique identifier for the workflow")
+        input_data: Dict[str, Any] = Field(..., description="Input data for the agent")
 
-
-class ExecuteResponse(BaseModel):
-    result: Dict[str, Any] = Field(..., description="The execution result")
-    execution_log: Dict[str, Any] = Field(
-        ..., description="Execution metadata and logs"
-    )
+    class Response(BaseModel):
+        result: Dict[str, Any] = Field(..., description="The execution result")
+        execution_log: Dict[str, Any] = Field(
+            ..., description="Execution metadata and logs"
+        )
 
 
 class GraphNode(BaseModel):
     id: str
-    type: str  # mcp_tool, llm, sub_agent
+    type: str
     tool_name: Optional[str] = None
     prompt_template: Optional[str] = None
     agent_name: Optional[str] = None
@@ -92,9 +84,6 @@ class GraphNode(BaseModel):
 class GraphEdge(BaseModel):
     from_: str = Field(..., alias="from")
     to: str
-
-    class Config:
-        populate_by_name = True
 
 
 class GraphDefinition(BaseModel):

@@ -8,8 +8,7 @@ from langchain_aws import ChatBedrock
 from langchain_core.messages import HumanMessage, SystemMessage
 from config.config import config
 from agent.models import (
-    ExecuteRequest,
-    ExecuteResponse,
+    API,
     GraphNode,
     GraphEdge,
     GraphDefinition,
@@ -142,51 +141,44 @@ class WorkflowService:
                 intent = available_intents[0] if available_intents else "general_query"
         return intent
 
-    async def execute(self, request: ExecuteRequest) -> ExecuteResponse:
+    async def execute(self, request: API.Request) -> API.Response:
         import asyncio
 
         trace_id = str(uuid.uuid4())
         start_time = time.time()
         try:
-            intent = request.intent
-            if not intent:
-                available_intents = await self.get_available_intents()
-                if not available_intents:
-                    return ExecuteResponse(
-                        result={"error": "No intents available in registry"},
-                        execution_log={
-                            "trace_id": trace_id,
-                            "workflow_id": request.workflow_id,
-                            "status": "failed",
-                            "error": "No intents available",
-                        },
-                    )
-                user_message = request.input_data.get(
-                    "message", str(request.input_data)
+            available_intents = await self.get_available_intents()
+            if not available_intents:
+                return API.Response(
+                    result={"error": "No intents available in registry"},
+                    execution_log={
+                        "trace_id": trace_id,
+                        "workflow_id": request.workflow_id,
+                        "status": "failed",
+                        "error": "No intents available",
+                    },
                 )
-                intent = await self.classify_intent(user_message, available_intents)
-            graph_definition = request.graph_definition
-            graph_version = "unknown"
-            if not graph_definition:
-                graph_def = await self.get_graph_for_intent(intent)
-                graph_version = graph_def.version
-                graph_definition = {
-                    "version": graph_def.version,
-                    "nodes": [
-                        {
-                            "id": n.id,
-                            "type": n.type,
-                            "tool_name": n.tool_name,
-                            "prompt_template": n.prompt_template,
-                            "agent_name": n.agent_name,
-                        }
-                        for n in graph_def.nodes
-                    ],
-                    "edges": [{"from": e.from_, "to": e.to} for e in graph_def.edges],
-                    "intent": intent,
-                }
-            else:
-                graph_version = graph_definition.get("version", "unknown")
+            user_message = request.input_data.get(
+                "message", str(request.input_data)
+            )
+            intent = await self.classify_intent(user_message, available_intents)
+            graph_def = await self.get_graph_for_intent(intent)
+            graph_version = graph_def.version
+            graph_definition = {
+                "version": graph_def.version,
+                "nodes": [
+                    {
+                        "id": n.id,
+                        "type": n.type,
+                        "tool_name": n.tool_name,
+                        "prompt_template": n.prompt_template,
+                        "agent_name": n.agent_name,
+                    }
+                    for n in graph_def.nodes
+                ],
+                "edges": [{"from": e.from_, "to": e.to} for e in graph_def.edges],
+                "intent": intent,
+            }
             agent = OrchestrationAgent(
                 graph_definition=graph_definition,
                 llm=self.llm,
@@ -240,7 +232,7 @@ class WorkflowService:
                 nodes=result.get("execution_history", []),
             )
 
-            return ExecuteResponse(
+            return API.Response(
                 result={
                     "intent": intent,
                     "output": result.get("output"),
@@ -277,7 +269,7 @@ class WorkflowService:
                 error=str(e),
             )
 
-            return ExecuteResponse(
+            return API.Response(
                 result={"error": str(e)},
                 execution_log=execution_log,
             )
