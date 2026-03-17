@@ -107,7 +107,6 @@ class WorkflowService:
         user_prompt = await self.prompt_service.get(
             "classify_intent_user", user_input=user_input
         )
-        print(system_prompt, user_prompt)
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=user_prompt),
@@ -121,7 +120,6 @@ class WorkflowService:
                     break
             else:
                 intent = available_intents[0] if available_intents else "general_query"
-        print(intent)
         return intent
 
     async def execute(self, request: API.Request) -> API.Response:
