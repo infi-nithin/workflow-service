@@ -6,7 +6,7 @@ from agent.agent import OrchestrationAgent
 import httpx
 from langchain_core.messages import HumanMessage, SystemMessage
 from config.config import config
-from agent.models import (
+from agent.models.models import (
     API,
     GraphNode,
     GraphEdge,
@@ -15,7 +15,9 @@ from agent.models import (
 from db.database import db
 from db.models import WorkflowExecution
 
-from agent.utils import ToolRegistryService, get_llm_client, PromptService
+from agent.utils.llm_client import get_llm_client
+from agent.utils.tool_registry_service import ToolRegistryService
+from agent.utils.prompt_service import PromptService
 
 
 class WorkflowService:
@@ -31,18 +33,18 @@ class WorkflowService:
         self.prompt_service = PromptService()
 
     async def _save_execution_to_db(
-    self,
-    trace_id: str,
-    workflow_id: str,
-    graph_version: str,
-    intent: str,
-    status: str,
-    started_at: datetime,
-    completed_at: datetime,
-    duration_ms: int,
-    nodes: List[Dict[str, Any]],
-    error: Optional[str] = None,
-) -> bool:
+        self,
+        trace_id: str,
+        workflow_id: str,
+        graph_version: str,
+        intent: str,
+        status: str,
+        started_at: datetime,
+        completed_at: datetime,
+        duration_ms: int,
+        nodes: List[Dict[str, Any]],
+        error: Optional[str] = None,
+    ) -> bool:
         try:
             async with db.session() as session:
                 execution = WorkflowExecution(

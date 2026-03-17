@@ -3,7 +3,7 @@ import threading
 from enum import Enum
 from typing import Dict
 from dataclasses import dataclass, field
-from agent.models import CircuitState
+from agent.models.models import CircuitState
 
 @dataclass
 class CircuitBreaker:

@@ -10,23 +10,18 @@ from alembic import context
 import sys
 import os
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from db.models import Base
-from db.database import get_database_url
+from db.database import db
 
 config = context.config
-config.set_main_option('sqlalchemy.url', get_database_url())
+config.set_main_option("sqlalchemy.url", db.get_database_url())
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 target_metadata = Base.metadata
-
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# my_important_option = config.get_main_option("my_important_option")
-# ... etc.
 
 
 def run_migrations_offline() -> None:
@@ -72,6 +67,7 @@ def run_migrations_online() -> None:
     else:
         # There's a running loop - we need to use a thread pool
         import concurrent.futures
+
         with concurrent.futures.ThreadPoolExecutor() as pool:
             pool.submit(asyncio.run, run_async_migrations())
 
