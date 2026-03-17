@@ -1,10 +1,9 @@
 import time
 import uuid
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from agent.agent import OrchestrationAgent
 import httpx
-from langchain_aws import ChatBedrock
 from langchain_core.messages import HumanMessage, SystemMessage
 from config.config import config
 from agent.models import (
@@ -13,62 +12,45 @@ from agent.models import (
     GraphEdge,
     GraphDefinition,
 )
-from agent.prompts import (
-    CLASSIFY_INTENT_SYSTEM_PROMPT,
-    CLASSIFY_INTENT_USER_PROMPT,
-)
-from db.database import get_session, init_db
+from db.database import db
 from db.models import WorkflowExecution
+
+from agent.utils import ToolRegistryService, get_llm_client, PromptService
 
 
 class WorkflowService:
     def __init__(self):
         self.graph_registry_url = config.registry.graph_registry_url
-        self.tool_registry_url = config.registry.tool_registry_url
-        self.mcp_server_url = config.registry.mcp_server_url
-        self.aws_region = config.aws.region
-        self.bedrock_model_id = config.aws.bedrock_model_id
+        self.model_id = config.aws.bedrock_model_id
         self.aws_secret_access_key = config.aws.secret_access_key
         self.aws_access_key_id = config.aws.access_key_id
         self.aws_session_token = config.aws.session_token
-        self.llm = ChatBedrock(
-            model_id=self.bedrock_model_id,
-            aws_secret_access_key=self.aws_secret_access_key,
-            aws_access_key_id=self.aws_access_key_id,
-            aws_session_token=self.aws_session_token,
-            region_name=self.aws_region,
-            model_kwargs={
-                "temperature": 0.7,
-                "max_tokens": 4096,
-            },
-        )
+        self.region_name = config.aws.region
+        self.llm = get_llm_client()
+        self.tool_registry_service = ToolRegistryService()
+        self.prompt_service = PromptService()
 
     async def _save_execution_to_db(
-        self,
-        trace_id: str,
-        workflow_id: str,
-        graph_version: str,
-        intent: str,
-        status: str,
-        started_at: datetime,
-        completed_at: datetime,
-        duration_ms: int,
-        nodes: List[Dict[str, Any]],
-        error: Optional[str] = None,
-    ) -> bool:
+    self,
+    trace_id: str,
+    workflow_id: str,
+    graph_version: str,
+    intent: str,
+    status: str,
+    started_at: datetime,
+    completed_at: datetime,
+    duration_ms: int,
+    nodes: List[Dict[str, Any]],
+    error: Optional[str] = None,
+) -> bool:
         try:
-            # Initialize database if not already done
-            await init_db(run_migrations=False)
-
-            # Get database session using context manager approach
-            async for session in get_session():
-                # Create new workflow execution record
+            async with db.session() as session:
                 execution = WorkflowExecution(
                     trace_id=trace_id,
                     workflow_id=workflow_id,
                     graph_version=graph_version,
                     intent=intent,
-                    model_versions_used=[{"bedrock_model_id": self.bedrock_model_id}],
+                    model_versions_used=[{"bedrock_model_id": self.model_id}],
                     total_tokens=0,
                     started_at=started_at,
                     completed_at=completed_at,
@@ -77,16 +59,11 @@ class WorkflowService:
                     nodes=nodes,
                     error=error,
                 )
-
                 session.add(execution)
-                await session.commit()
-                break
 
             return True
 
-        except Exception as e:
-            # Log error but don't fail the execution
-            print(f"Failed to save execution to database: {str(e)}")
+        except Exception:
             return False
 
     async def get_available_intents(self) -> List[str]:
@@ -124,8 +101,13 @@ class WorkflowService:
             if available_intents
             else "no intents available"
         )
-        system_prompt = CLASSIFY_INTENT_SYSTEM_PROMPT.format(intents=intents_str)
-        user_prompt = CLASSIFY_INTENT_USER_PROMPT.format(user_input=user_input)
+        system_prompt = await self.prompt_service.get(
+            "classify_intent_system", intents=intents_str
+        )
+        user_prompt = await self.prompt_service.get(
+            "classify_intent_user", user_input=user_input
+        )
+        print(system_prompt, user_prompt)
         messages = [
             SystemMessage(content=system_prompt),
             HumanMessage(content=user_prompt),
@@ -139,11 +121,10 @@ class WorkflowService:
                     break
             else:
                 intent = available_intents[0] if available_intents else "general_query"
+        print(intent)
         return intent
 
     async def execute(self, request: API.Request) -> API.Response:
-        import asyncio
-
         trace_id = str(uuid.uuid4())
         start_time = time.time()
         try:
@@ -158,9 +139,7 @@ class WorkflowService:
                         "error": "No intents available",
                     },
                 )
-            user_message = request.input_data.get(
-                "message", str(request.input_data)
-            )
+            user_message = request.input_data.get("message", str(request.input_data))
             intent = await self.classify_intent(user_message, available_intents)
             graph_def = await self.get_graph_for_intent(intent)
             graph_version = graph_def.version
@@ -179,10 +158,11 @@ class WorkflowService:
                 "edges": [{"from": e.from_, "to": e.to} for e in graph_def.edges],
                 "intent": intent,
             }
+            tool_registry_url = await self.tool_registry_service.get_url(request.sys_id)
             agent = OrchestrationAgent(
                 graph_definition=graph_definition,
                 llm=self.llm,
-                tool_registry_url=self.tool_registry_url,
+                tool_registry_url=tool_registry_url,
             )
             input_data = {
                 "workflow_id": request.workflow_id,
@@ -190,17 +170,7 @@ class WorkflowService:
                 "intent": intent,
                 "trace_id": trace_id,
             }
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    import concurrent.futures
-
-                    executor = concurrent.futures.ThreadPoolExecutor()
-                    result = executor.submit(agent.invoke, input_data).result()
-                else:
-                    result = agent.invoke(input_data)
-            except Exception:
-                result = agent.invoke(input_data)
+            result = await agent.invoke(input_data)
             end_time = time.time()
             duration_ms = int((end_time - start_time) * 1000)
             result_status = result.get("status", "completed")
@@ -209,17 +179,16 @@ class WorkflowService:
                 "workflow_id": request.workflow_id,
                 "graph_version": graph_version,
                 "intent": intent,
-                "model_versions_used": [self.bedrock_model_id],
+                "model_versions_used": [self.model_id],
                 "nodes": result.get("execution_history", []),
-                "started_at": datetime.utcnow().isoformat(),
-                "completed_at": datetime.utcnow().isoformat(),
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
                 "status": result_status,
                 "duration_ms": duration_ms,
             }
-
             # Save execution to database
-            started_at_dt = datetime.utcfromtimestamp(start_time)
-            completed_at_dt = datetime.utcnow()
+            started_at_dt = datetime.fromtimestamp(start_time, tz=timezone.utc)
+            completed_at_dt = datetime.now(timezone.utc)
             await self._save_execution_to_db(
                 trace_id=trace_id,
                 workflow_id=request.workflow_id,
@@ -231,7 +200,6 @@ class WorkflowService:
                 duration_ms=duration_ms,
                 nodes=result.get("execution_history", []),
             )
-
             return API.Response(
                 result={
                     "intent": intent,
@@ -249,13 +217,13 @@ class WorkflowService:
                 "status": "failed",
                 "error": str(e),
                 "duration_ms": duration_ms,
-                "started_at": datetime.utcnow().isoformat(),
-                "completed_at": datetime.utcnow().isoformat(),
+                "started_at": datetime.now(timezone.utc).isoformat(),
+                "completed_at": datetime.now(timezone.utc).isoformat(),
             }
 
             # Save failed execution to database
-            started_at_dt = datetime.utcfromtimestamp(start_time)
-            completed_at_dt = datetime.utcnow()
+            started_at_dt = datetime.fromtimestamp(start_time, tz=timezone.utc)
+            completed_at_dt = datetime.now(timezone.utc)
             await self._save_execution_to_db(
                 trace_id=trace_id,
                 workflow_id=request.workflow_id,

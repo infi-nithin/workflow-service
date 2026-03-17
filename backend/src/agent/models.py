@@ -65,6 +65,7 @@ class API:
     class Request(BaseModel):
         workflow_id: str = Field(..., description="Unique identifier for the workflow")
         input_data: Dict[str, Any] = Field(..., description="Input data for the agent")
+        sys_id: str = Field(default="MFS", description="The system id from which the request is coming")
 
     class Response(BaseModel):
         result: Dict[str, Any] = Field(..., description="The execution result")

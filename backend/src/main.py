@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import sys
 from contextlib import asynccontextmanager
@@ -9,7 +8,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.routes import router as api_router
-from db.database import init_db, close_db
+from db.database import db
 
 
 class UserContext(TypedDict, total=False):
@@ -43,10 +42,10 @@ def extract_user_context(req: Request) -> Optional[Dict[str, Any]]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting Agent Backend Service...")
-    await init_db(run_migrations=True)
+    await db.init_db(run_migrations=True)
     yield
     print("Shutting down Agent Backend Service...")
-    await close_db()
+    await db.close_db()
 
 
 def create_app() -> FastAPI:

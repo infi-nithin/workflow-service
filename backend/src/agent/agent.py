@@ -1,23 +1,17 @@
 import json
 import uuid
-import asyncio
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
+from agent.utils import PromptService
 import httpx
 from langchain_aws import ChatBedrock
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from langgraph.graph import StateGraph, END
 from langchain_mcp_adapters.client import MultiServerMCPClient
-from config.config import config
 from agent.models import (
     SupervisorAgentState,
     SupervisorDecision,
     SupervisorAction,
-)
-from agent.prompts import (
-    SUPERVISOR_SYSTEM_PROMPT_TEMPLATE,
-    SUPERVISOR_DECISION_PROMPT_TEMPLATE,
-    LLM_CONTEXT_PROMPT,
 )
 
 
@@ -27,15 +21,15 @@ class OrchestrationAgent:
     ):
         self.graph_definition = graph_definition
         self.llm = llm
-        self.tool_registry_url = config.registry.tool_registry_url
+        self.tool_registry_url = tool_registry_url
         self.mcp_server_url = self.tool_registry_url + "/mcp"
         self.intent = graph_definition.get("intent", "unknown")
-        self.system_prompt = self._create_supervisor_prompt(graph_definition)
         self.graph = self._build_graph()
         self.entry_point = self._find_entry_point()
         self._mcp_client = None
+        self.prompt_service = PromptService()
 
-    def _create_supervisor_prompt(self, graph_definition: Dict[str, Any]) -> str:
+    async def _create_supervisor_prompt(self, graph_definition: Dict[str, Any]) -> str:
         nodes = graph_definition.get("nodes", [])
         edges = graph_definition.get("edges", [])
         version = graph_definition.get("version", "unknown")
@@ -44,7 +38,9 @@ class OrchestrationAgent:
         for node in nodes:
             node_id = node.get("id", "")
             node_type = node.get("type", "unknown")
-            next_nodes = [edge.get("to") for edge in edges if edge.get("from") == node_id]
+            next_nodes = [
+                edge.get("to") for edge in edges if edge.get("from") == node_id
+            ]
             node_desc = f"- Node: {node_id}, Type: {node_type}"
             if next_nodes:
                 node_desc += f", Can proceed to: {', '.join(next_nodes)}"
@@ -58,7 +54,8 @@ class OrchestrationAgent:
         nodes_text = (
             "\n".join(nodes_description) if nodes_description else "No nodes defined"
         )
-        prompt = SUPERVISOR_SYSTEM_PROMPT_TEMPLATE.format(
+        prompt = await self.prompt_service.get(
+            "supervisor_system",
             intent=intent,
             version=version,
             nodes_text=nodes_text,
@@ -121,7 +118,7 @@ class OrchestrationAgent:
             raise
         return []
 
-    def supervisor_node(self, state: SupervisorAgentState) -> Dict[str, Any]:
+    async def supervisor_node(self, state: SupervisorAgentState) -> Dict[str, Any]:
         messages = state.get("messages", [])
         current_node = state.get("current_node", self.entry_point)
         execution_history = state.get("execution_history", [])
@@ -133,16 +130,8 @@ class OrchestrationAgent:
             if node.get("id") == current_node:
                 current_node_def = node
                 break
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                available_tools = loop.run_until_complete(self._get_available_tools())
-            finally:
-                loop.close()
-        except Exception:
-            available_tools = []
-        supervisor_prompt = self._create_supervisor_decision_prompt(
+        available_tools = await self._get_available_tools()
+        supervisor_decision_prompt = await self._create_supervisor_decision_prompt(
             current_node=current_node,
             current_node_def=current_node_def,
             messages=messages,
@@ -154,8 +143,8 @@ class OrchestrationAgent:
         try:
             llm_with_structure = self.llm.with_structured_output(SupervisorDecision)
             decision_messages = [
-                SystemMessage(content=self.system_prompt),
-                HumanMessage(content=supervisor_prompt),
+                SystemMessage(content=await self._create_supervisor_prompt(graph_definition)),
+                HumanMessage(content=supervisor_decision_prompt),
             ]
             decision = llm_with_structure.invoke(decision_messages)
             updates: Dict[str, Any] = {
@@ -167,7 +156,7 @@ class OrchestrationAgent:
             execution_history.append(
                 {
                     "node": "supervisor",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "decision": decision.model_dump(),
                 }
             )
@@ -185,7 +174,7 @@ class OrchestrationAgent:
                 + [
                     {
                         "node": "supervisor",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "error": str(e),
                     }
                 ]
@@ -193,13 +182,13 @@ class OrchestrationAgent:
                 else [
                     {
                         "node": "supervisor",
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                         "error": str(e),
                     }
                 ],
             }
 
-    def _create_supervisor_decision_prompt(
+    async def _create_supervisor_decision_prompt(
         self,
         current_node: str,
         current_node_def: Optional[Dict[str, Any]],
@@ -271,7 +260,8 @@ Node Type: {node_type}
         ]
         if possible_next:
             node_info += f"Possible next nodes: {', '.join(possible_next)}\n"
-        prompt = SUPERVISOR_DECISION_PROMPT_TEMPLATE.format(
+        prompt = await self.prompt_service.get(
+            "supervisor_decision",
             node_info=node_info,
             messages_text=messages_text,
             outputs_text=outputs_text,
@@ -280,70 +270,55 @@ Node Type: {node_type}
         )
         return prompt
 
-    def llm_node(self, state: SupervisorAgentState) -> Dict[str, Any]:
-        """LLM node that processes information with a specific prompt.
-        The supervisor decides what prompt to give to the LLM.
-        Args:
-            state: Current agent state
-        Returns:
-            Updated state with LLM response
-        """
-        messages = list(state.get("messages", [])) if state.get("messages") else []
+    async def llm_node(self, state: SupervisorAgentState) -> Dict[str, Any]:
+        messages = list(state.get("messages", []))
         decision = state.get("decision")
-        execution_history = (
-            list(state.get("execution_history", []))
-            if state.get("execution_history")
-            else []
-        )
-        node_outputs = (
-            dict(state.get("node_outputs", {})) if state.get("node_outputs") else {}
-        )
+        execution_history = list(state.get("execution_history", []))
+        node_outputs = dict(state.get("node_outputs", {}))
+
         if not decision or decision.action != SupervisorAction.LLM:
             return {"messages": messages, "node_outputs": node_outputs}
-        llm_prompt = (
-            decision.llm_prompt or decision.response or "Process the following task"
+
+        llm_prompt = decision.llm_prompt or decision.response or "Process task"
+
+        context = "\n\n".join(
+            f"=== {k} ===\n{json.dumps(v, indent=2)}" for k, v in node_outputs.items()
         )
+
+        full_prompt = f"Context:\n{context}\n\nTask:{llm_prompt}"
+
+        system_msg = SystemMessage(content=await self.prompt_service.get("llm_context"))
+        user_msg = HumanMessage(content=full_prompt)
+
         try:
-            context_parts = []
-            for node_id, output in node_outputs.items():
-                context_parts.append(
-                    f"=== {node_id} ===\n{json.dumps(output, indent=2)}"
-                )
-            context = "\n\n".join(context_parts)
-            full_prompt = f"""Context from previous steps:
-{context}
-Task: {llm_prompt}"""
-            system_msg = SystemMessage(content=LLM_CONTEXT_PROMPT)
-            user_msg = HumanMessage(content=full_prompt)
-            response = self.llm.invoke([system_msg, user_msg])
-            messages = list(messages)
+            response = await self.llm.ainvoke([system_msg, user_msg])
+
             messages.append(AIMessage(content=response.content))
-            current_node = state.get("current_node", "llm_node")
-            node_outputs[current_node] = {"type": "llm", "response": response.content}
+
+            current_node = state.get("current_node", "llm")
+
+            node_outputs[current_node] = {
+                "type": "llm",
+                "response": response.content,
+            }
+
             execution_history.append(
                 {
                     "node": "llm",
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "prompt": llm_prompt,
-                    "response": response.content[:500],
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             )
+
             return {
                 "messages": messages,
                 "node_outputs": node_outputs,
                 "execution_history": execution_history,
             }
+
         except Exception as e:
-            execution_history.append(
-                {
-                    "node": "llm",
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "error": str(e),
-                }
-            )
+            execution_history.append({"node": "llm", "error": str(e)})
             return {
-                "messages": messages + [AIMessage(content=f"Error: {str(e)}")],
-                "node_outputs": node_outputs,
+                "messages": messages,
                 "execution_history": execution_history,
             }
 
@@ -375,69 +350,52 @@ Task: {llm_prompt}"""
         except Exception:
             raise
 
-    def tool_node(self, state: SupervisorAgentState) -> Dict[str, Any]:
-        messages = list(state.get("messages", [])) if state.get("messages") else []
+    async def tool_node(self, state: SupervisorAgentState) -> Dict[str, Any]:
+        messages = list(state.get("messages", []))
         decision = state.get("decision")
-        tool_results = (
-            dict(state.get("tool_results", {})) if state.get("tool_results") else {}
-        )
-        execution_history = (
-            list(state.get("execution_history", []))
-            if state.get("execution_history")
-            else []
-        )
-        node_outputs = (
-            dict(state.get("node_outputs", {})) if state.get("node_outputs") else {}
-        )
-        raw_input = dict(state.get("raw_input", {})) if state.get("raw_input") else {}
+        tool_results = dict(state.get("tool_results", {}))
+        execution_history = list(state.get("execution_history", []))
+        node_outputs = dict(state.get("node_outputs", {}))
+        raw_input = dict(state.get("raw_input", {}))
+
         if not decision or decision.action != SupervisorAction.TOOL:
             return {
                 "messages": messages,
                 "tool_results": tool_results,
                 "node_outputs": node_outputs,
             }
+
         tool_name = decision.tool_name
-        tool_arguments = decision.tool_arguments or {}
-        if not tool_name:
-            return {
-                "messages": messages,
-                "tool_results": tool_results,
-                "node_outputs": node_outputs,
-            }
-        merged_arguments = {
-            **raw_input,
-            **node_outputs,
-            **tool_arguments,
-        }
+        args = decision.tool_arguments or {}
+
+        merged_args = {**raw_input, **node_outputs, **args}
+
         try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                result = loop.run_until_complete(
-                    self._call_mcp_tool(tool_name, merged_arguments)
-                )
-            finally:
-                loop.close()
+            result = await self._call_mcp_tool(tool_name, merged_args)
         except Exception as e:
-            result = {"error": str(e), "tool_name": tool_name}
+            result = {"error": str(e)}
+
         tool_results[tool_name] = result
+
         current_node = state.get("current_node", tool_name)
+
         node_outputs[current_node] = {
             "type": "tool",
             "tool_name": tool_name,
             "result": result,
         }
-        messages = list(messages)
-        messages.append(ToolMessage(content=json.dumps(result), tool_call_id=tool_name))
+
+        messages.append(
+            ToolMessage(content=json.dumps(result), tool_call_id=tool_name)
+        )
+
         execution_history.append(
             {
                 "node": "tool",
-                "timestamp": datetime.utcnow().isoformat(),
-                "tool_name": tool_name,
-                "arguments": merged_arguments,
-                "result": str(result)[:500],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
         )
+
         return {
             "messages": messages,
             "tool_results": tool_results,
@@ -445,7 +403,7 @@ Task: {llm_prompt}"""
             "execution_history": execution_history,
         }
 
-    def invoke(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def invoke(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
         initial_state: SupervisorAgentState = {
             "messages": [],
             "graph_definition": self.graph_definition,
@@ -461,7 +419,7 @@ Task: {llm_prompt}"""
         user_message = input_data.get("raw_input", {}).get("message", str(input_data))
         initial_state["messages"] = [HumanMessage(content=user_message)]
         try:
-            result = self.graph.invoke(initial_state)
+            result = await self.graph.ainvoke(initial_state)
             final_output = None
             decision = result.get("decision")
             if decision and decision.response:
