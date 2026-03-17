@@ -3,6 +3,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 from langchain_core.messages import ToolMessage
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from agent.utils.circuit_breaker import get_circuit_breaker_registry
 
 
 class ToolNode:
@@ -63,9 +64,47 @@ class ToolNode:
         # Merge arguments from various sources
         merged_args = {**raw_input, **node_outputs, **args}
 
+        # Get circuit breaker registry
+        circuit_breaker = get_circuit_breaker_registry()
+
+        # Check if circuit breaker allows execution
+        if not circuit_breaker.can_execute(tool_name):
+            # Circuit is open - return error without executing
+            result = {
+                "error": f"Circuit breaker is OPEN for tool: {tool_name}. Please try again later."
+            }
+            tool_results[tool_name] = result
+            current_node = state.get("current_node", tool_name)
+            node_outputs[current_node] = {
+                "type": "tool",
+                "tool_name": tool_name,
+                "result": result,
+                "circuit_breaker_open": True,
+            }
+            messages.append(
+                ToolMessage(content=json.dumps(result), tool_call_id=tool_name)
+            )
+            execution_history.append(
+                {
+                    "node": "tool",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "circuit_breaker_open": True,
+                }
+            )
+            return {
+                "messages": messages,
+                "tool_results": tool_results,
+                "node_outputs": node_outputs,
+                "execution_history": execution_history,
+            }
+
         try:
             result = await self._call_mcp_tool(tool_name, merged_args)
+            # Record success in circuit breaker
+            circuit_breaker.record_success(tool_name)
         except Exception as e:
+            # Record failure in circuit breaker
+            circuit_breaker.record_failure(tool_name)
             result = {"error": str(e)}
 
         tool_results[tool_name] = result

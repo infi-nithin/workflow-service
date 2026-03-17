@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from agent.utils.prompt_service import PromptService
+from agent.utils.circuit_breaker import get_circuit_breaker_registry
 
 
 class LLMNode:
@@ -22,6 +23,25 @@ class LLMNode:
         if not decision or decision.action != SupervisorAction.LLM:
             return {"messages": messages, "node_outputs": node_outputs}
 
+        # Get circuit breaker registry for LLM
+        circuit_breaker = get_circuit_breaker_registry()
+        llm_key = "llm"
+
+        # Check if circuit breaker allows LLM execution
+        if not circuit_breaker.can_execute(llm_key):
+            execution_history.append(
+                {
+                    "node": "llm",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "error": "Circuit breaker is OPEN for LLM. Please try again later.",
+                    "circuit_breaker_open": True,
+                }
+            )
+            return {
+                "messages": messages,
+                "execution_history": execution_history,
+            }
+
         llm_prompt = decision.llm_prompt or decision.response or "Process task"
 
         # Build context from previous node outputs
@@ -36,6 +56,8 @@ class LLMNode:
 
         try:
             response = await self.llm.ainvoke([system_msg, user_msg])
+            # Record success in circuit breaker
+            circuit_breaker.record_success(llm_key)
 
             messages.append(AIMessage(content=response.content))
 
@@ -60,6 +82,8 @@ class LLMNode:
             }
 
         except Exception as e:
+            # Record failure in circuit breaker
+            circuit_breaker.record_failure(llm_key)
             execution_history.append({"node": "llm", "error": str(e)})
             return {
                 "messages": messages,

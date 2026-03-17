@@ -1,7 +1,6 @@
 import time
 import threading
-from enum import Enum
-from typing import Dict
+from typing import Dict, Optional
 from dataclasses import dataclass, field
 from agent.models.models import CircuitState
 
@@ -87,3 +86,19 @@ class CircuitBreakerRegistry:
         with self._lock:
             for breaker in self._breakers.values():
                 breaker.reset()
+
+
+# Global singleton instance
+_circuit_breaker_registry: Optional[CircuitBreakerRegistry] = None
+
+
+def get_circuit_breaker_registry(
+    threshold: int = 3, cooldown: int = 30
+) -> CircuitBreakerRegistry:
+    """Get or create the global circuit breaker registry singleton."""
+    global _circuit_breaker_registry
+    if _circuit_breaker_registry is None:
+        _circuit_breaker_registry = CircuitBreakerRegistry(
+            threshold=threshold, cooldown=cooldown
+        )
+    return _circuit_breaker_registry
