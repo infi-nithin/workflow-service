@@ -5,7 +5,7 @@ import httpx
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 
 from agent.utils.prompt_service import PromptService
-from agent.models.models import SupervisorAgentState, SupervisorDecision, SupervisorAction
+from agent.models import SupervisorAgentState, SupervisorDecision, SupervisorAction
 
 
 class SupervisorNode:

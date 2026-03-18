@@ -50,7 +50,7 @@ class ToolNode:
         raw_input = dict(state.get("raw_input", {}))
 
         # Only process if decision is to call a tool
-        from agent.models.models import SupervisorAction
+        from agent.models import SupervisorAction
         if not decision or decision.action != SupervisorAction.TOOL:
             return {
                 "messages": messages,

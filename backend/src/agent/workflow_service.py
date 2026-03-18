@@ -6,7 +6,7 @@ from agent.agent import OrchestrationAgent
 import httpx
 from langchain_core.messages import HumanMessage, SystemMessage
 from config.config import config
-from agent.models.models import (
+from agent.models import (
     API,
     GraphNode,
     GraphEdge,

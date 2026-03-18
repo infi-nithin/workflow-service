@@ -19,7 +19,7 @@ class LLMNode:
         node_outputs = dict(state.get("node_outputs", {}))
 
         # Only process if decision is to call LLM
-        from agent.models.models import SupervisorAction
+        from agent.models import SupervisorAction
         if not decision or decision.action != SupervisorAction.LLM:
             return {"messages": messages, "node_outputs": node_outputs}
 

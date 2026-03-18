@@ -7,7 +7,7 @@ from agent.graph.nodes.supervisor import SupervisorNode
 from agent.graph.nodes.llm_node import LLMNode
 from agent.graph.nodes.tool_node import ToolNode
 from agent.graph.builder import GraphBuilder
-from agent.models.models import SupervisorAgentState
+from agent.models import SupervisorAgentState
 
 
 class OrchestrationAgent:

@@ -2,7 +2,7 @@ import time
 import threading
 from typing import Dict, Optional
 from dataclasses import dataclass, field
-from agent.models.models import CircuitState
+from agent.models import CircuitState
 
 @dataclass
 class CircuitBreaker:

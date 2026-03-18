@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status, UploadFile, File, Form
 from datetime import datetime, timezone
 from agent.workflow_service import WorkflowService
-from agent.models.models import API
+from agent.models import API
 from api.v1.api_models import ChatRequest, ChatResponse
 
 router = APIRouter()
