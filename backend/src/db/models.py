@@ -39,6 +39,13 @@ class WorkflowExecution(Base):
         JSONB, nullable=False, default=list
     )
     error: Mapped[Optional[str]] = mapped_column(String(4000), nullable=True)
+    # HITL (Human In The Loop) fields
+    pending_hitl: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSONB, nullable=True, default=None
+    )
+    current_state: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSONB, nullable=True, default=None
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=datetime.now(timezone.utc), nullable=False
     )

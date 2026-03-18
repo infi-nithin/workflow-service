@@ -1,4 +1,4 @@
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 
 from pydantic import BaseModel, Field
 
@@ -20,6 +20,15 @@ class ChatRequest(BaseModel):
     graph_definition: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Graph definition (optional, will be fetched from registry if not provided)",
+    )
+    # HITL (Human In The Loop) fields
+    trace_id: Optional[str] = Field(
+        default=None,
+        description="Trace ID to resume from a pending HITL state",
+    )
+    human_response: Optional[str] = Field(
+        default=None,
+        description="Human's response to a pending HITL confirmation",
     )
 
 

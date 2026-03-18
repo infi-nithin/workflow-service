@@ -20,6 +20,9 @@ async def execute(request: ChatRequest):
         exec_request = API.Request(
             workflow_id=request.workflow_id,
             input_data=request.input_data,
+            sys_id=request.input_data.get("sys_id", "MFS"),
+            trace_id=request.trace_id,
+            human_response=request.human_response,
         )
         # Execute agent
         result = await workflow_service.execute(exec_request)

@@ -10,11 +10,12 @@ class SupervisorAction(str, Enum):
     TOOL = "tool"
     END = "end"
     CONTINUE = "continue"
+    HITL = "hitl"
 
 
 class SupervisorDecision(BaseModel):
     action: SupervisorAction = Field(
-        description="The action to take: 'llm', 'tool', 'end', or 'continue'"
+        description="The action to take: 'llm', 'tool', 'end', 'continue', or 'hitl'"
     )
     reasoning: str = Field(description="Reasoning for the decision")
     tool_name: Optional[str] = Field(
@@ -33,6 +34,19 @@ class SupervisorDecision(BaseModel):
     llm_prompt: Optional[str] = Field(
         default=None, description="Prompt to give to LLM (if action is 'llm')"
     )
+    # Human In The Loop fields
+    hitl_message: Optional[str] = Field(
+        default=None,
+        description="Message to show human for confirmation (if action is 'hitl')"
+    )
+    hitl_options: Optional[List[str]] = Field(
+        default_factory=list,
+        description="Options to present to human for confirmation (if action is 'hitl')"
+    )
+    human_response: Optional[str] = Field(
+        default=None,
+        description="Human's response to HITL prompt (filled after human confirms)"
+    )
 
 
 class SupervisorAgentState(TypedDict, total=False):
@@ -48,6 +62,9 @@ class SupervisorAgentState(TypedDict, total=False):
     should_continue: bool
     node_outputs: Dict[str, Any]
     raw_input: Dict[str, Any]
+    # Human In The Loop state
+    pending_hitl: Optional[Dict[str, Any]]  # Stores pending HITL request data
+    hitl_responses: Dict[str, str]  # Maps node_id to human response
 
 
 class AgentState(TypedDict, total=False):
@@ -66,6 +83,13 @@ class API:
         workflow_id: str = Field(..., description="Unique identifier for the workflow")
         input_data: Dict[str, Any] = Field(..., description="Input data for the agent")
         sys_id: str = Field(default="MFS", description="The system id from which the request is coming")
+        # HITL fields
+        trace_id: Optional[str] = Field(
+            default=None, description="Trace ID to resume from pending HITL"
+        )
+        human_response: Optional[str] = Field(
+            default=None, description="Human's response to pending HITL"
+        )
 
     class Response(BaseModel):
         result: Dict[str, Any] = Field(..., description="The execution result")

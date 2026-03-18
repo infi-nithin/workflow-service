@@ -28,7 +28,7 @@ class SupervisorNode:
                 return node_id
 
         return nodes[0].get("id") if nodes else "START"
-    
+
     async def _create_supervisor_prompt(self, graph_definition: Dict[str, Any]) -> str:
         nodes = graph_definition.get("nodes", [])
         edges = graph_definition.get("edges", [])
@@ -139,9 +139,9 @@ class SupervisorNode:
             prompt_template = current_node_def.get("prompt_template")
             agent_name = current_node_def.get("agent_name")
             node_info = f"""
-Current Node: {current_node}
-Node Type: {node_type}
-"""
+                        Current Node: {current_node}
+                        Node Type: {node_type}
+                        """
             if tool_name:
                 node_info += f"Requires Tool: {tool_name}\n"
             if prompt_template:
@@ -229,7 +229,8 @@ Node Type: {node_type}
                     reasoning=f"Error in supervisor: {str(e)}",
                     response="An error occurred during execution.",
                 ),
-                "execution_history": execution_history + [
+                "execution_history": execution_history
+                + [
                     {
                         "node": "supervisor",
                         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -256,5 +257,7 @@ Node Type: {node_type}
             return "llm"
         elif action == SupervisorAction.TOOL:
             return "tool"
+        elif action == SupervisorAction.HITL:
+            return "hitl"
         else:
             return "end"
