@@ -1,0 +1,2 @@
+2026-03-26 16:42:30,495 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.7290999928954989ms
+2026-03-26 16:42:30,570 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.6011999794282019ms

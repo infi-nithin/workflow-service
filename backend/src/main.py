@@ -9,6 +9,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.routes import router as api_router
 from db.database import db
+from aop_logging import AOPLoggingMiddleware, RequestTimingMiddleware
+from aop_logging import get_aop_logger
 
 
 class UserContext(TypedDict, total=False):
@@ -41,10 +43,11 @@ def extract_user_context(req: Request) -> Optional[Dict[str, Any]]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Starting Agent Backend Service...")
+    logger = get_aop_logger().logger
+    logger.info("Starting Agent Backend Service...")
     await db.init_db(run_migrations=True)
     yield
-    print("Shutting down Agent Backend Service...")
+    logger.info("Shutting down Agent Backend Service...")
     await db.close_db()
 
 
@@ -55,6 +58,8 @@ def create_app() -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
     )
+    app.add_middleware(AOPLoggingMiddleware)
+    app.add_middleware(RequestTimingMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

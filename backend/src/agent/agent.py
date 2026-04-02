@@ -50,11 +50,13 @@ class OrchestrationAgent:
         )
 
         # Tool node - handles MCP tool calls
+        print("53")
         mcp_server_url = (
             self.tool_registry_url + "/mcp" if self.tool_registry_url else None
         )
+        print("57")
         self.tool_node = ToolNode(mcp_server_url=mcp_server_url)
-
+        print("59")
         # HITL node - handles human confirmation
         self.hitl_node = HITLNode(
             prompt_service=self.prompt_service,

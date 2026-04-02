@@ -19,7 +19,7 @@ from sqlalchemy import select, update
 from agent.utils.llm_client import get_llm_client
 from agent.utils.tool_registry_service import ToolRegistryService
 from agent.utils.prompt_service import PromptService
-
+from aop_logging import log_method
 
 class WorkflowService:
     def __init__(self):
@@ -118,6 +118,7 @@ class WorkflowService:
         except Exception:
             return None
 
+    @log_method("WorkFlowService")
     async def _resume_from_hitl(self, request: API.Request, start_time: float) -> API.Response:
         """
         Resume execution from a pending HITL state.
@@ -253,6 +254,7 @@ class WorkflowService:
                 execution_log=execution_log,
             )
 
+    @log_method("WorkFlowService")
     async def get_available_intents(self) -> List[str]:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(f"{self.graph_registry_url}/api/v1/intents")
@@ -260,6 +262,7 @@ class WorkflowService:
             data = response.json()
             return data.get("intents", [])
 
+    @log_method("WorkFlowService")
     async def get_graph_for_intent(self, intent: str) -> GraphDefinition:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(
@@ -280,6 +283,7 @@ class WorkflowService:
                 ],
             )
 
+    @log_method("WorkFlowService")
     async def classify_intent(
         self, user_input: str, available_intents: List[str]
     ) -> str:
@@ -309,6 +313,7 @@ class WorkflowService:
                 intent = available_intents[0] if available_intents else "general_query"
         return intent
 
+    @log_method("WorkFlowService")
     async def execute(self, request: API.Request) -> API.Response:
         start_time = time.time()
         

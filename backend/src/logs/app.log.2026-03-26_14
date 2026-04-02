@@ -1,0 +1,80 @@
+2026-03-26 11:50:42,541 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 11:50:50,001 | aop_logger | INFO | Shutting down Agent Backend Service...
+2026-03-26 11:50:55,371 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 11:51:07,842 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 2.808499993989244ms
+2026-03-26 11:51:07,893 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 2.5043000059667975ms
+2026-03-26 11:51:13,277 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1957.4562000052538ms (SLOW)
+2026-03-26 11:51:16,345 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 3067.4883000028785ms (SLOW)
+2026-03-26 11:51:16,945 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 599.1159999975935ms
+2026-03-26 11:51:38,503 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.execute SUCCESS | Duration: 27184.19780000113ms (SLOW)
+2026-03-26 11:51:38,506 | aop_logger | WARNING | [OperationType.API_ENDPOINT] POST /api/v1/agent/execute SUCCESS | Duration: 27195.087899977807ms (SLOW)
+2026-03-26 11:54:01,141 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1307.9091999970842ms (SLOW)
+2026-03-26 11:54:02,736 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 1593.53579999879ms (SLOW)
+2026-03-26 11:54:04,005 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 1267.3054999904707ms (SLOW)
+2026-03-26 12:28:24,696 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 12:30:41,588 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 2.366700005950406ms
+2026-03-26 12:30:41,607 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.4484000091906637ms
+2026-03-26 12:31:05,219 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1068.912899994757ms (SLOW)
+2026-03-26 12:31:10,396 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 5175.561099982588ms (SLOW)
+2026-03-26 12:31:11,045 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 649.0858999895863ms
+2026-03-26 12:46:11,614 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 12:46:18,068 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.135200000135228ms
+2026-03-26 12:46:18,094 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.6493999972008169ms
+2026-03-26 12:46:44,731 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 661.0587000031956ms
+2026-03-26 12:46:52,418 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 7685.75570001849ms (SLOW)
+2026-03-26 12:46:52,953 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 535.2623999933712ms
+2026-03-26 12:56:10,539 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 12:56:14,285 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.106200012145564ms
+2026-03-26 12:56:14,312 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.4359999729786068ms
+2026-03-26 12:56:30,090 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 537.2251000080723ms
+2026-03-26 12:56:32,654 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 2563.0449000163935ms (SLOW)
+2026-03-26 12:56:33,251 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 596.4813999889884ms
+2026-03-26 12:57:14,255 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 12:57:23,402 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.3608000008389354ms
+2026-03-26 12:57:23,427 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.7980000120587647ms
+2026-03-26 12:58:04,227 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 502.2020999749657ms
+2026-03-26 12:58:09,960 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 5732.651199999964ms (SLOW)
+2026-03-26 12:58:10,428 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 468.32209997228347ms
+2026-03-26 12:59:43,446 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.33179999445565045ms
+2026-03-26 12:59:43,466 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.518000015290454ms
+2026-03-26 13:19:46,175 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1407.050799985882ms (SLOW)
+2026-03-26 13:19:48,791 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 2613.1947000103537ms (SLOW)
+2026-03-26 13:19:50,210 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 1418.0821999907494ms (SLOW)
+2026-03-26 13:34:33,875 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 13:34:47,672 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 3.007499995874241ms
+2026-03-26 13:34:47,719 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.8977000145241618ms
+2026-03-26 13:34:52,165 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1349.566400022013ms (SLOW)
+2026-03-26 13:34:53,127 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.108099997509271ms
+2026-03-26 13:34:53,158 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 0.8588000200688839ms
+2026-03-26 13:35:01,786 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 9619.25320001319ms (SLOW)
+2026-03-26 13:35:03,102 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 1314.647999999579ms (SLOW)
+2026-03-26 13:35:22,947 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 782.0251999946777ms
+2026-03-26 13:35:27,180 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 4232.489999994868ms (SLOW)
+2026-03-26 13:35:28,138 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 957.021199981682ms
+2026-03-26 13:35:45,408 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.execute SUCCESS | Duration: 54592.49229999841ms (SLOW)
+2026-03-26 13:35:45,410 | aop_logger | WARNING | [OperationType.API_ENDPOINT] POST /api/v1/agent/execute SUCCESS | Duration: 54603.06539997691ms (SLOW)
+2026-03-26 13:39:56,545 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.2838999973610044ms
+2026-03-26 13:39:56,597 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.1771999998018146ms
+2026-03-26 13:40:00,208 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1236.3789999799337ms (SLOW)
+2026-03-26 13:40:04,583 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 4373.735399974976ms (SLOW)
+2026-03-26 13:40:05,926 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 1341.3409999920987ms (SLOW)
+2026-03-26 13:40:46,893 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.execute SUCCESS | Duration: 47921.621000015875ms (SLOW)
+2026-03-26 13:40:46,894 | aop_logger | WARNING | [OperationType.API_ENDPOINT] POST /api/v1/agent/execute SUCCESS | Duration: 47925.64780000248ms (SLOW)
+2026-03-26 14:01:15,262 | aop_logger | ERROR | [OperationType.API_ENDPOINT] POST /api/v1/agent/execute FAILED | Duration: 1553100.28340001ms | Error: None
+2026-03-26 14:01:15,268 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.execute SUCCESS | Duration: 1553103.5550000088ms (SLOW)
+2026-03-26 14:01:19,331 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 14:01:29,720 | aop_logger | INFO | Starting Agent Backend Service...
+2026-03-26 14:01:43,012 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1341.541200003121ms (SLOW)
+2026-03-26 14:01:48,550 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 5537.59649998392ms (SLOW)
+2026-03-26 14:01:49,162 | aop_logger | INFO | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 610.3068000229541ms
+2026-03-26 14:02:49,862 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.execute SUCCESS | Duration: 68192.60120001854ms (SLOW)
+2026-03-26 14:02:49,865 | aop_logger | WARNING | [OperationType.API_ENDPOINT] POST /api/v1/agent/execute SUCCESS | Duration: 68199.52230001218ms (SLOW)
+2026-03-26 14:03:50,359 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 2.4711999867577106ms
+2026-03-26 14:03:50,394 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.3236000086180866ms
+2026-03-26 14:05:23,844 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_available_intents SUCCESS | Duration: 1408.1281999824569ms (SLOW)
+2026-03-26 14:05:28,201 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.classify_intent SUCCESS | Duration: 4356.090099987341ms (SLOW)
+2026-03-26 14:05:29,503 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.get_graph_for_intent SUCCESS | Duration: 1300.3812000097241ms (SLOW)
+2026-03-26 14:06:23,409 | aop_logger | WARNING | [OperationType.SERVICE_METHOD] WorkFlowService.execute SUCCESS | Duration: 60973.07639999781ms (SLOW)
+2026-03-26 14:06:23,410 | aop_logger | WARNING | [OperationType.API_ENDPOINT] POST /api/v1/agent/execute SUCCESS | Duration: 60977.373000001535ms (SLOW)
+2026-03-26 14:15:24,416 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.4907000004313886ms
+2026-03-26 14:15:24,452 | aop_logger | INFO | [OperationType.API_ENDPOINT] GET /api/auth/me SUCCESS | Duration: 1.3113000022713095ms

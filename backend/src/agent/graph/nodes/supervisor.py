@@ -67,9 +67,11 @@ class SupervisorNode:
     async def _get_available_tools(self) -> List[Dict[str, Any]]:
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
+                print("70")
                 response = await client.get(
                     f"{self.tool_registry_url}/api/v1/mcp/tools"
                 )
+                print("74")
                 if response.status_code == 200:
                     data = response.json()
                     return data.get("tools", [])
